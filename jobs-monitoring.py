@@ -7,7 +7,7 @@ import numpy as np
 from functools import reduce
 
 # Thresholds for the apps will be taken from json saved
-with open('/Users/ludovicocesaro/Downloads/threshold.json', 'r') as f:
+with open('threshold.json', 'r') as f:
     threshold = json.load(f)
 
 # REST API call to history server
