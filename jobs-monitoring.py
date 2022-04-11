@@ -1,4 +1,5 @@
 import json
+from operator import index, indexOf
 import requests
 import schedule
 import time
@@ -9,32 +10,31 @@ from functools import reduce
 with open('/Users/ludovicocesaro/Downloads/threshold.json', 'r') as f:
     threshold = json.load(f)
 
-# Assuming max threshold
-# max_duration_threshold = 100000
+# REST API call to history server
+response = requests.get("https://adh-dsw-spark-history.dev.adh.syncier.cloud/api/v1/applications")
 
 def job():
-    print("Get job infos from spark history server")
-    # Getting the current status using the rest api
-    response = requests.get("https://adh-dsw-spark-history.dev.adh.syncier.cloud/api/v1/applications")
-
     # Get specifics durations from response and converting into json readable
     response_json = response.json()
+    #Getting duration and thresholds and Appids
     jobs_duration = sum(list(map(lambda val: reduce(getDuration, val['attempts'], []), response_json)), [])
     jobs_thresholds = sum(list(map(lambda val: reduce(getDuration, val['attempts'], []), threshold)), [])
-    print(jobs_duration, 'Current jobs duration')
-    print(jobs_thresholds, 'Threshold jobs duration')
-
     appIds = getAppId(response_json)
-    print(appIds, 'APP IDS')
 
     # Evaluate current job duration > threshold maximum duration:
-
-        #notify_slack()
+    print(jobs_duration, jobs_thresholds, 'Duration / Max threshold')
+    # print(appIds, 'appIDs')
+    result = np.less(jobs_thresholds, jobs_duration)
+    print(result, 'jobs exceeded threshold')
+    for i in result:
+        if i==True:
+            print('Maximum Threshold:', jobs_thresholds[i], ' exceeded. Latest job duration', jobs_duration[i], 'for appid: ', appIds[i])
+    #notify_slack('Appids + jobs durations exceeded the threshold + thresholds')
 
 # Send notification to slack channel
 # SETUP - MUST BE HIDE IN Environment variable as showed by Kai
-def notify_slack(duration):
-    payload = 'duration'
+def notify_slack(message):
+    payload = '{"text":"%s"}' % message
     response = requests.post('https://hooks.slack.com/services/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',
                             data=payload) # to hide later
     print(response.text)
@@ -52,7 +52,6 @@ def getDuration(array, attempt):
     return array
 
 job()
-
 # # Scheduling the job every 2 weeks
 # schedule.every().day.at("12:10").do(job)
 
