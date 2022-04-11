@@ -5,6 +5,7 @@ import schedule
 import time
 import numpy as np
 from functools import reduce
+import os
 
 # Thresholds for the apps will be taken from json saved
 with open('threshold.json', 'r') as f:
@@ -12,6 +13,9 @@ with open('threshold.json', 'r') as f:
 
 # REST API call to history server
 response = requests.get("https://adh-dsw-spark-history.dev.adh.syncier.cloud/api/v1/applications")
+
+#Getting webhook link for slack from env var
+webhook = os.getenv('WEBHOOK')
 
 def job():
     # Get specifics durations from response and converting into json readable
@@ -26,16 +30,14 @@ def job():
     # print(appIds, 'appIDs')
     result = np.less(jobs_thresholds, jobs_duration)
     print(result, 'jobs exceeded threshold')
-    for i in result:
-        if i==True:
-            print('Maximum Threshold:', jobs_thresholds[i], ' exceeded. Latest job duration', jobs_duration[i], 'for appid: ', appIds[i])
+
     #notify_slack('Appids + jobs durations exceeded the threshold + thresholds')
 
 # Send notification to slack channel
 # SETUP - MUST BE HIDE IN Environment variable as showed by Kai
 def notify_slack(message):
     payload = '{"text":"%s"}' % message
-    response = requests.post('https://hooks.slack.com/services/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',
+    response = requests.post(webhook,
                             data=payload) # to hide later
     print(response.text)
 
