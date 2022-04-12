@@ -1,5 +1,4 @@
 import json
-from operator import index, indexOf
 import requests
 import schedule
 import time
@@ -26,19 +25,21 @@ def job():
     appIds = getAppId(response_json)
 
     # Evaluate current job duration > threshold maximum duration:
-    print(jobs_duration, jobs_thresholds, 'Duration / Max threshold')
-    # print(appIds, 'appIDs')
+    # Jobs that exceeded threshold
     result = np.less(jobs_thresholds, jobs_duration)
-    print(result, 'jobs exceeded threshold')
+    # index of the jobs exceeded threshold
+    index = np.where(result == True)[0]
 
-    #notify_slack('Appids + jobs durations exceeded the threshold + thresholds')
+    for i in index: # improve message for slack
+        print(jobs_duration[i], 'duration exceeded the maximum threshold of',jobs_thresholds[i], 'for appId:', appIds[i])
+
+        #notify_slack(message)
 
 # Send notification to slack channel
-# SETUP - MUST BE HIDE IN Environment variable as showed by Kai
 def notify_slack(message):
     payload = '{"text":"%s"}' % message
     response = requests.post(webhook,
-                            data=payload) # to hide later
+                            data=payload)
     print(response.text)
 
 def getAppId(response_json):
@@ -54,7 +55,7 @@ def getDuration(array, attempt):
     return array
 
 job()
-# # Scheduling the job every 2 weeks
+# Scheduling the job every 2 weeks
 # schedule.every().day.at("12:10").do(job)
 
 # while True:
