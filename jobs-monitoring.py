@@ -53,14 +53,18 @@ def job():
             message = " ".join(map(str, result))
             print(message)
             # notify_slack(message)
-    except Exception as e: print(e)
-    print('Error in the appids match. Check the coherence between the history server and the thresholds')
-        #notify_slack(message)
+    except Exception as e:
+        message = (
+            "Error in the appids match. Check the coherence between the history server and the thresholds",
+            e,
+        )
+        print(message)
+        # notify_slack(message, e)
 
 
 # Send notification to slack channel
-def notify_slack(message):
-    payload = '{"text": "%s"}' % message
+def notify_slack(message, *args):
+    payload = '{"text": "%s"}' % message, *args
     r = requests.post(webhook, data=payload)
     print(r.text)
 
