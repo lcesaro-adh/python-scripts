@@ -8,7 +8,7 @@ import requests
 import schedule
 
 # Thresholds for the apps will be taken from json saved
-with open("threshold.json", "r") as f:
+with open("thresholds.json", "r") as f:
     threshold = json.load(f)
 
 # REST API call to history server
@@ -31,16 +31,17 @@ def job():
     jobs_thresholds = sum(
         list(map(lambda val: reduce(getDuration, val["attempts"], []), threshold)), []
     )
-    serverAppIds = getAppId(response_json)
-    threshAppIds = getAppId(threshold)
 
-    # Evaluate current job duration > threshold maximum duration:
-    # Jobs that exceeded threshold
-    result = np.less(jobs_thresholds, jobs_duration)
-    # index of the jobs exceeded threshold
-    index = np.where(result == True)[0]
+    try:
+        serverAppIds = getAppId(response_json)
+        threshAppIds = getAppId(threshold)
 
-    if np.array_equal(serverAppIds,threshAppIds):
+        # Evaluate current job duration > threshold maximum duration:
+        # Jobs that exceeded threshold
+        result = np.less(jobs_thresholds, jobs_duration)
+        # index of the jobs exceeded threshold
+        index = np.where(result == True)[0]
+        np.array_equal(serverAppIds, threshAppIds)
         for i in index:
             result = (
                 jobs_duration[i],
@@ -49,9 +50,12 @@ def job():
                 "for appId:",
                 serverAppIds[i],
             )
-            message = " ".join(map(str, result))  # Perhaps not necessary
+            message = " ".join(map(str, result))
             print(message)
             # notify_slack(message)
+    except Exception as e: print(e)
+    print('Error in the appids match. Check the coherence between the history server and the thresholds')
+        #notify_slack(message)
 
 
 # Send notification to slack channel
