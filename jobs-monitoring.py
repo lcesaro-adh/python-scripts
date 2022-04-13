@@ -30,17 +30,17 @@ def job():
     # index of the jobs exceeded threshold
     index = np.where(result == True)[0]
 
-    for i in index: # improve message for slack
-        print(jobs_duration[i], 'duration exceeded the maximum threshold of',jobs_thresholds[i], 'for appId:', appIds[i])
-
-        #notify_slack(message)
+    for i in index:
+        result = (jobs_duration[i], 'duration exceeded the maximum threshold of',jobs_thresholds[i], 'for appId:', appIds[i])
+        message = " ".join(map(str,result)) # Perhaps not necessary
+        print(message)
+        notify_slack(message)
 
 # Send notification to slack channel
 def notify_slack(message):
-    payload = '{"text":"%s"}' % message
-    response = requests.post(webhook,
-                            data=payload)
-    print(response.text)
+    payload = '{"text": "%s"}' % message
+    r = requests.post(webhook, data=payload)
+    print(r.text)
 
 def getAppId(response_json):
   ids = []
