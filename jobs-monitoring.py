@@ -35,27 +35,31 @@ def job(threshold, response):
     try:
         serverAppIds = getAppId(response_json)
         threshAppIds = getAppId(threshold)
-
-        # Evaluate current job duration > threshold maximum duration:
-        # Jobs that exceeded threshold
-        result = np.less(jobs_thresholds, jobs_duration)
-        # index of the jobs exceeded threshold
-        index = np.where(result == True)[0]
-        np.array_equal(serverAppIds, threshAppIds)
-        for i in index:
-            result = (
-                jobs_duration[i],
-                "duration exceeded the maximum threshold of",
-                jobs_thresholds[i],
-                "for appId:",
-                serverAppIds[i],
-            )
-            message = " ".join(map(str, result))
-            #print(message)
-            notify_slack(message)
+        if np.array_equal(serverAppIds, threshAppIds):
+            # Evaluate current job duration > threshold maximum duration:
+            # Jobs that exceeded threshold
+            result = np.less(jobs_thresholds, jobs_duration)
+            # index of the jobs exceeded threshold
+            index = np.where(result == True)[0]
+            # checking the appid is okay
+            for i in index:
+                result = (
+                    jobs_duration[i],
+                    "duration exceeded the maximum threshold of",
+                    jobs_thresholds[i],
+                    "for appId:",
+                    serverAppIds[i],
+                )
+                message = " ".join(map(str, result))
+                print(message)
+                #notify_slack(message)
+        else:
+            message='Error: App ids of the thresholds are not matching with the history server'
+            print(message)
+            #notify_slack(message)
     except Exception as e:
-        message = str(e)
-        notify_slack(message)
+        print(e)
+        #notify_slack(e)
 
 
 # Send notification to slack channel
