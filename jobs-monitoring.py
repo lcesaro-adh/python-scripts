@@ -20,7 +20,7 @@ response = requests.get(
 webhook = os.getenv("WEBHOOK")
 
 
-def job():
+def job(threshold, response):
     # Get specifics durations from response and converting into json readable
     response_json = response.json()
     # Getting duration and thresholds and Appids
@@ -55,7 +55,7 @@ def job():
             # notify_slack(message)
     except Exception as e:
         message = (
-            "Error in the appids match. Check the coherence between the history server and the thresholds",
+            "Error: ",
             e,
         )
         print(message)
@@ -83,7 +83,7 @@ def getDuration(array, attempt):
     return array
 
 
-job()
+job(threshold, response)
 # Scheduling the job every 2 weeks
 # schedule.every(2).weeks.at("10:00").do(job)
 
