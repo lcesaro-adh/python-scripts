@@ -51,21 +51,17 @@ def job(threshold, response):
                 serverAppIds[i],
             )
             message = " ".join(map(str, result))
-            print(message)
-            # notify_slack(message)
+            #print(message)
+            notify_slack(message)
     except Exception as e:
-        message = (
-            "Error: ",
-            e,
-        )
-        print(message)
-        # notify_slack(message, e)
+        message = str(e)
+        notify_slack(message)
 
 
 # Send notification to slack channel
-def notify_slack(message, *args):
-    payload = '{"text": "%s"}' % message, *args
-    r = requests.post(webhook, data=payload)
+def notify_slack(message):
+    payload = {"text":message}
+    r = requests.post(webhook, data=json.dumps(payload))
     print(r.text)
 
 
