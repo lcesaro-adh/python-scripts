@@ -7,11 +7,13 @@ import numpy as np
 import requests
 import schedule
 
-# Thresholds for the apps will be taken from json saved
+# !! env var must be set with webhook link !!
+
+# Getting thresholds from json
 with open("thresholds.json", "r") as f:
     threshold = json.load(f)
 
-# REST API call to history server
+# REST API call to history server to get info on apps
 response = requests.get(
     "https://adh-dsw-spark-history.dev.adh.syncier.cloud/api/v1/applications"
 )
@@ -21,9 +23,9 @@ webhook = os.getenv("WEBHOOK")
 
 
 def job():
-    # Get specifics durations from response and converting into json readable
+    # Converting json readable
     response_json = response.json()
-    # Getting duration and thresholds and Appids
+    # Getting duration and max thresholds for apps
     jobs_duration = sum(
         list(map(lambda val: reduce(getDuration, val["attempts"], []), response_json)),
         [],
@@ -33,15 +35,16 @@ def job():
     )
 
     try:
+        # Getting appids from HS and threshold
         serverAppIds = getAppId(response_json)
         threshAppIds = getAppId(threshold)
+        # Check whether appids on threshold and server are the same
         if np.array_equal(serverAppIds, threshAppIds):
             # Evaluate current job duration > threshold maximum duration:
             # Jobs that exceeded threshold
             result = np.less(jobs_thresholds, jobs_duration)
             # index of the jobs exceeded threshold
             index = np.where(result == True)[0]
-            # checking the appid is okay
             for i in index:
                 result = (
                     jobs_duration[i],
@@ -50,16 +53,18 @@ def job():
                     "for appId:",
                     serverAppIds[i],
                 )
+                # Formatting to sring
                 message = " ".join(map(str, result))
                 print(message)
                 # notify_slack(message)
         else:
             message = "Error: App ids of the thresholds are not matching with the history server ones"
             print(message)
-            # notify_slack(message)
+            notify_slack(message)
     except Exception as e:
+        # Notify any other error
         print(e)
-        # notify_slack(e)
+        notify_slack(e)
 
 
 # Send notification to slack channel
@@ -87,8 +92,8 @@ def getDuration(array, attempt):
 schedule.every(14).days.at("10:30").do(job)
 
 # testing purposes
-#schedule.every(10).seconds.do(job)
-#job(threshold, response)
+# schedule.every(10).seconds.do(job)
+# job()
 
 
 while True:
