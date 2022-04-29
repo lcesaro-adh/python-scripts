@@ -77,14 +77,14 @@ def combine(times):
 
         # Add random PERSONS from persons new for matching
         # Add random POLICY ID from policies new for matching 
-        # with pd.option_context('mode.chained_assignment',None):
-        replace_pp = claims_2[281533:] # Edit the number putting the last item of the previous run
-        replace_pp.reset_index(inplace=True)
-        replace_pp['PERSON_ID'] = random_persons['ID'].copy()
-        replace_pp['POLICY_ID'] = random_policies['ID'].copy()
-        #replace_pp.drop(['index'], axis = 1, inplace=True)
-        new_matched_claims = replace_pp
-        new_matched_claims # has random person_id
+        with pd.option_context('mode.chained_assignment',None):
+            replace_pp = claims_2[281533:] # Edit the number putting the last item of the previous run
+            replace_pp.reset_index(inplace=True)
+            replace_pp['PERSON_ID'] = random_persons['ID'].copy()
+            replace_pp['POLICY_ID'] = random_policies['ID'].copy()
+            #replace_pp.drop(['index'], axis = 1, inplace=True)
+            new_matched_claims = replace_pp
+            new_matched_claims # has random person_id
 
         # claims enlarged dataframe with PERSON_ID and POLICY_ID primary key coming from persons and policies for matching
         frames = [old_claims, new_matched_claims]
@@ -92,6 +92,9 @@ def combine(times):
         claims2_new.reset_index(inplace=True)
         claims2_new.drop(["level_0","index"], axis = 1, inplace=True)
         print(claims2_new)
-        #claims2_new.to_csv("/Users/ludovicocesaro/Downloads/enlarged/claims.csv")
+        print(times)
+        claims2_new.to_csv(("/Users/ludovicocesaro/Downloads/test/{}/claims.csv").format(times))
+        persons_2.to_csv(("/Users/ludovicocesaro/Downloads/test/{}/persons.csv").format(times))
+        policies_2.to_csv(("/Users/ludovicocesaro/Downloads/test/{}/policies.csv").format(times))
 
 generate_anonymized_data()
