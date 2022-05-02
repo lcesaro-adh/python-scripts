@@ -5,41 +5,49 @@ pd.set_option("display.max_columns", None)
 
 def generate_anonymized_data():
     """
-	Function that generates more anonymized data starting from a base ridm file anonymized then combine.
+	Function that generates more anonymized data starting from a base ridm file already anonymized then combine it.
 
     The function asks for how many times the base ridm file want to be enlarged.
-    """
+    """ 
     times = int(input("Please enter how many times you want to enlarge the datasets:\n"))
     print(f"You choosed to enlarge by {times} times")
 
-    for x in range(times):
-        print('anonymization run', x+1)
-        # RUN ANONYMIZATION SCRIPT
-        # home_dir = subprocess.run(
-        #     [
-        #         "cd",
-        #         "/Users/ludovicocesaro/Desktop/Files/Reply/Allianz/Projects/datahub-pipelines/tasks/common/anonymization",
-        #     ]
-        # )
-        # TODO: FIX python_env & env_var / make work command
-        # python_env = subprocess.run(["pyenv", "activate", "dp"])
-        # env_var = subprocess.run(["export", "PYTHONPATH=$PWD:$PYTHONPATH"])
-        # print("Setup successful:", home_dir.returncode)
-        # anonymize = subprocess.run(
-        #     [
-        #         f"python",
-        #         "/Users/ludovicocesaro/Desktop/Files/Reply/Allianz/Projects/datahub-pipelines/tasks/common/anonymization/secure_anonymize.py",
-        #         "/Users/ludovicocesaro/Downloads/anonymize",
-        #         "/Users/ludovicocesaro/Downloads/test/{}".format(x)
-        #     ]
-        # )
-        # command for anonymization
-        # TODO: path must be generalized for working in all environments
+    # for x in range(times):
+    #     print('Anonymization run', x+1)
+    #     # RUN ANONYMIZATION SCRIPT
+    #     home_dir = subprocess.run(
+    #         [
+    #             "cd",
+    #             "/Users/ludovicocesaro/Desktop/Files/Reply/Allianz/Projects/datahub-pipelines",
+    #         ]
+    #     )
+    #     print(subprocess.run("pwd"), 'pwd')
+    #     #TODO: FIX python_env & env_var / make work command
+    #     env_var1 = subprocess.run(["export", "PYENV_VIRTUALENV_DISABLE_PROMPT=1"], shell=True)
+    #     env_var2 = subprocess.run(["export", "PYTHONPATH=$PWD:$PYTHONPATH"], shell=True)
+    #     print("Setup finished:", home_dir.returncode,env_var1.returncode,env_var2.returncode)
+    #     print(x, 'X')
+    #     next = x+1
+    #     anonymize = subprocess.run(
+    #         [
+    #             f"python",
+    #             "/Users/ludovicocesaro/Desktop/Files/Reply/Allianz/Projects/datahub-pipelines/tasks/common/anonymization/secure_anonymize.py",
+    #             "/Users/ludovicocesaro/Downloads/test/{}".format(x),
+    #             "/Users/ludovicocesaro/Downloads/test/{}".format(next)
+    #         ])
+
+    #     check = (f"python",
+    #             "/Users/ludovicocesaro/Desktop/Files/Reply/Allianz/Projects/datahub-pipelines/tasks/common/anonymization/secure_anonymize.py",
+    #             "/Users/ludovicocesaro/Downloads/test/{}".format(x),
+    #             "/Users/ludovicocesaro/Downloads/test/{}".format(next))
+    #     print(check)
+    #     # command for anonymization
+    #     # TODO: path must be generalized for working in all environments
 
     combine(times)
 
 def combine(times):
-    #for x in range(times):
+    for x in range(times):
         # Extracting the old policies and new
         old_policies = pd.read_csv("/Users/ludovicocesaro/Downloads/test/{}/policies.csv".format(times-1))
         new_policies = pd.read_csv("/Users/ludovicocesaro/Downloads/test/{}/policies.csv".format(times))
@@ -75,10 +83,13 @@ def combine(times):
         random_policies.reset_index(inplace=True)
         random_policies['ID'].head(10)
 
+
         # Add random PERSONS from persons new for matching
         # Add random POLICY ID from policies new for matching 
         with pd.option_context('mode.chained_assignment',None):
-            replace_pp = claims_2[281533:] # Edit the number putting the last item of the previous run
+            index = 281533*(x+1)
+            print(index, "INDEX")
+            replace_pp = claims_2[index:] # TODO: check number if its really progressive after runs
             replace_pp.reset_index(inplace=True)
             replace_pp['PERSON_ID'] = random_persons['ID'].copy()
             replace_pp['POLICY_ID'] = random_policies['ID'].copy()
@@ -91,10 +102,10 @@ def combine(times):
         claims2_new = pd.concat(frames)
         claims2_new.reset_index(inplace=True)
         claims2_new.drop(["level_0","index"], axis = 1, inplace=True)
-        print(claims2_new)
-        print(times)
+        print("Claims dataset enlarged and matched", claims2_new)
         claims2_new.to_csv(("/Users/ludovicocesaro/Downloads/test/{}/claims.csv").format(times))
         persons_2.to_csv(("/Users/ludovicocesaro/Downloads/test/{}/persons.csv").format(times))
         policies_2.to_csv(("/Users/ludovicocesaro/Downloads/test/{}/policies.csv").format(times))
-
+        print("Combination of the anonymized dataset completed", x+1, "run(s) of ", times)
+    #print('ok')
 generate_anonymized_data()
