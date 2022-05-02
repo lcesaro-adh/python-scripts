@@ -1,7 +1,10 @@
 import pandas as pd
 import subprocess
+import os
+import sys
 
 pd.set_option("display.max_columns", None)
+d = dict(os.environ)
 
 def generate_anonymized_data():
     """
@@ -12,37 +15,28 @@ def generate_anonymized_data():
     times = int(input("Please enter how many times you want to enlarge the datasets:\n"))
     print(f"You choosed to enlarge by {times} times")
 
-    # for x in range(times):
-    #     print('Anonymization run', x+1)
-    #     # RUN ANONYMIZATION SCRIPT
-    #     home_dir = subprocess.run(
-    #         [
-    #             "cd",
-    #             "/Users/ludovicocesaro/Desktop/Files/Reply/Allianz/Projects/datahub-pipelines",
-    #         ]
-    #     )
-    #     print(subprocess.run("pwd"), 'pwd')
-    #     #TODO: FIX python_env & env_var / make work command
-    #     env_var1 = subprocess.run(["export", "PYENV_VIRTUALENV_DISABLE_PROMPT=1"], shell=True)
-    #     env_var2 = subprocess.run(["export", "PYTHONPATH=$PWD:$PYTHONPATH"], shell=True)
-    #     print("Setup finished:", home_dir.returncode,env_var1.returncode,env_var2.returncode)
-    #     print(x, 'X')
-    #     next = x+1
-    #     anonymize = subprocess.run(
-    #         [
-    #             f"python",
-    #             "/Users/ludovicocesaro/Desktop/Files/Reply/Allianz/Projects/datahub-pipelines/tasks/common/anonymization/secure_anonymize.py",
-    #             "/Users/ludovicocesaro/Downloads/test/{}".format(x),
-    #             "/Users/ludovicocesaro/Downloads/test/{}".format(next)
-    #         ])
+    # SETUP Virtual Environment
+    py_env = subprocess.check_call([sys.executable,"-m","pyenv", "activate", "dp"])
+    py_path = subprocess.check_call([sys.executable,"-m","export", "PYTHONPATH=$PWD:$PYTHONPATH"])
+    py_path2 = subprocess.check_call([sys.executable,"-m","echo", "$PYTHONPATH"])
+    #env_req = subprocess.run(["pip", "install", "-r", "/Users/ludovicocesaro/Desktop/Files/Reply/Allianz/Projects/datahub-pipelines/requirements.txt"], shell=True, capture_output=True)
+    env_req = subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "/Users/ludovicocesaro/Desktop/Files/Reply/Allianz/Projects/datahub-pipelines/requirements.txt"])
+    print(py_env, py_path,py_path2, env_req,'status setup')
 
-    #     check = (f"python",
-    #             "/Users/ludovicocesaro/Desktop/Files/Reply/Allianz/Projects/datahub-pipelines/tasks/common/anonymization/secure_anonymize.py",
-    #             "/Users/ludovicocesaro/Downloads/test/{}".format(x),
-    #             "/Users/ludovicocesaro/Downloads/test/{}".format(next))
-    #     print(check)
-    #     # command for anonymization
-    #     # TODO: path must be generalized for working in all environments
+    for x in range(times):
+        print('Anonymization run', x+1)
+        # RUN ANONYMIZATION SCRIPT
+        #TODO: FIX python_env & env_var / make work command
+        next = x+1
+        anonymize = subprocess.run(
+            [
+                f"python",
+                "/Users/ludovicocesaro/Desktop/Files/Reply/Allianz/Projects/datahub-pipelines/tasks/common/anonymization/secure_anonymize.py",
+                "/Users/ludovicocesaro/Downloads/test/{}".format(x),
+                "/Users/ludovicocesaro/Downloads/test/{}".format(next)
+            ])
+        # command for anonymization
+        # TODO: path must be generalized for working in all environments
 
     combine(times)
 
@@ -87,7 +81,8 @@ def combine(times):
         # Add random PERSONS from persons new for matching
         # Add random POLICY ID from policies new for matching 
         with pd.option_context('mode.chained_assignment',None):
-            index = 281533*(x+1)
+            index = 281533
+            index = index*(x+1) #TODO Check dynamic index if it's working always
             print(index, "INDEX")
             replace_pp = claims_2[index:] # TODO: check number if its really progressive after runs
             replace_pp.reset_index(inplace=True)
@@ -107,5 +102,5 @@ def combine(times):
         persons_2.to_csv(("/Users/ludovicocesaro/Downloads/test/{}/persons.csv").format(times))
         policies_2.to_csv(("/Users/ludovicocesaro/Downloads/test/{}/policies.csv").format(times))
         print("Combination of the anonymized dataset completed", x+1, "run(s) of ", times)
-    #print('ok')
+    print('ok')
 generate_anonymized_data()
