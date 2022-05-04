@@ -9,10 +9,8 @@ def generate_anonymized_data():
 
     TODO A stop at wanted filesize should be implemented
     """ 
-    times = int(input("Please enter how many times you want to enlarge the datasets:\n"))
-    print(f"You choosed to enlarge by {times} times")
-
-    # extracting policies
+    times = int(input("Please enter how many times you want to enlarge the datasets: (exponential)\n"))
+    print(f"The enlargment will be compounded by {times} times")
     
     for x in range(times):
         policies = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/policies.csv")
@@ -28,10 +26,10 @@ def generate_anonymized_data():
         new_policies['ID'] = new_policies['ID'] + 'ABC'
 
         # Taking random ids from persons and policies to make them match with claims foreign keys
-        random_persons = new_persons.sample(n = round(index*(x+1)))
+        random_persons = new_persons.sample(n = index*pow(2, x))
         random_persons.reset_index(inplace=True)
 
-        random_policies = new_policies.sample(n = round(index*(x+1)))
+        random_policies = new_policies.sample(n = index*pow(2, x))
         random_policies.reset_index(inplace=True)
 
         # Replacing correct keys to new generated claims
@@ -53,9 +51,19 @@ def generate_anonymized_data():
         new_matched_claims.to_csv("/Users/ludovicocesaro/Downloads/test/0/claims.csv")
         concat_persons.to_csv("/Users/ludovicocesaro/Downloads/test/0/persons.csv")
         concat_policies.to_csv("/Users/ludovicocesaro/Downloads/test/0/policies.csv")
-        # Needs column fix
+
+        #TODO Needs columns fix
+        print('columns fix')
+    fix_size()
 
 def fix_size():
     print('Askinf how much should be the size and reducing to')
+    policies = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/policies.csv")
+    claims = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/claims.csv")
+    persons = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/persons.csv")
+
+    print(policies.info())
+    print(policies.info())
+    print(policies.info())
 
 generate_anonymized_data()
