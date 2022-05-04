@@ -12,10 +12,12 @@ def generate_anonymized_data():
     times = int(input("Please enter how many times you want to enlarge the datasets: (exponential)\n"))
     print(f"The enlargment will be compounded by {times} times")
     
+    policies = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/policies.csv")
+    claims = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/claims.csv")
+    persons = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/persons.csv")
+    
     for x in range(times):
-        policies = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/policies.csv")
-        claims = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/claims.csv")
-        persons = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/persons.csv")
+
         index = 281533
         # Creating new claims, persons , policies primary keys
         new_claims = claims.copy()
@@ -26,10 +28,10 @@ def generate_anonymized_data():
         new_policies['ID'] = new_policies['ID'] + 'ABC'
 
         # Taking random ids from persons and policies to make them match with claims foreign keys
-        random_persons = new_persons.sample(n = index*pow(2, x))
+        random_persons = new_persons.sample(n = index*pow(2, x), replace=True)
         random_persons.reset_index(inplace=True)
 
-        random_policies = new_policies.sample(n = index*pow(2, x))
+        random_policies = new_policies.sample(n = index*pow(2, x), replace=True)
         random_policies.reset_index(inplace=True)
 
         # Replacing correct keys to new generated claims
@@ -40,6 +42,7 @@ def generate_anonymized_data():
         new_matched_claims = pd.concat(claims_frames)
         new_matched_claims.reset_index(inplace=True)
         new_matched_claims.drop(['index'], axis=1, inplace=True)
+        claims = new_matched_claims
         print(new_matched_claims)
 
         persons_frames = [persons, new_persons]
@@ -48,22 +51,35 @@ def generate_anonymized_data():
         policies_frames = [policies, new_policies]
         concat_policies = pd.concat(policies_frames)
 
-        new_matched_claims.to_csv("/Users/ludovicocesaro/Downloads/test/0/claims.csv")
-        concat_persons.to_csv("/Users/ludovicocesaro/Downloads/test/0/persons.csv")
-        concat_policies.to_csv("/Users/ludovicocesaro/Downloads/test/0/policies.csv")
+    #TODO Check column fix
+    claims_columns = ['ID', 'PERSON_ID','PROVIDER_ID', 'POLICY_ID', 'LOCAL_CLAIM_ID', 'CLAIM_COUNTRY','LOCAL_COVERAGE', 'NETWORK_TREATMENT', 'NETWORK_TYPE','TREATMENT_START_DATE', 'TREATMENT_END_DATE', 'BILLING_DATE','SUBMISSION_DATE', 'PRE_APPROVAL_DATE', 'APPROVAL_DATE','SETTLEMENT_DATE', 'CLAIM_AMOUNT', 'AMOUNT_PAID_BY_CAPTIVE','REIMBURSED_AMOUNT', 'REIMBURSABLE_AMOUNT', 'CURRENCY_CLAIM_AMOUNT','CURRENCY_AMOUNT_PAID_BY_CAPTIVE', 'CURRENCY_REIMBURSED_AMOUNT','CURRENCY_REIMBURSABLE_AMOUNT', 'REIMBURSEMENT_TYPE', 'CLAIM_STATUS','CLAIM_REJECTION_REASON', 'MEDICAL_AREA']
+    persons_columns = ['ID','DUMMY_PERSON_FLAG', 'DATE_OF_BIRTH', 'MEMBER_TYPE', 'GENDER','OCCUPATION', 'LOCATION', 'LOCATION_TYPE', 'REGION']
+    policies_columns = ['ID','BUSINESS_RELATION_ID', 'CERTIFICATE_ID', 'CONTRACT_ID', 'PRODUCT_ID','LOCAL_POLICY_ID', 'NO_OF_RISKS', 'POLICY_START_DATE','POLICY_END_DATE', 'NEW_BUSINESS']
 
-        #TODO Needs columns fix
-        print('columns fix')
-    fix_size()
+    new_matched_claims.drop(columns=[col for col in new_matched_claims if col not in claims_columns], inplace=True)
+    concat_persons.drop(columns=[col for col in concat_persons if col not in persons_columns], inplace=True)
+    concat_policies.drop(columns=[col for col in concat_policies if col not in policies_columns], inplace=True)
 
-def fix_size():
-    print('Askinf how much should be the size and reducing to')
-    policies = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/policies.csv")
-    claims = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/claims.csv")
-    persons = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/persons.csv")
+    #TODO instead of saving it now save it in fix size after asking if it is fine
+    new_matched_claims.to_csv("/Users/ludovicocesaro/Downloads/test/0/claims.csv",index=False)
+    concat_persons.to_csv("/Users/ludovicocesaro/Downloads/test/0/persons.csv",index=False)
+    concat_policies.to_csv("/Users/ludovicocesaro/Downloads/test/0/policies.csv",index=False)
+            
+    fix_size(new_matched_claims, concat_persons, concat_policies)
 
-    print(policies.info())
-    print(policies.info())
-    print(policies.info())
+# TODO Finish fix size
+def fix_size(claims, policies, persons):
+    byte = 1000000
+    print('Memory usage of policies/claims/persons tables')
+    # print(claims.memory_usage().sum()/byte, 'Mb')
+    # print(persons.memory_usage().sum()/byte, 'Mb')
+    # print('Initial size policies:', policies.memory_usage().sum()/byte, 'Mb', 'enlarged:', concat_policies.memory_usage().sum()/byte)
+
+    # decrease = int(input("How much do you want to decrease the size? % "))
+    # total = len(policies.index)
+    # toremove = total*decrease/100
+    # print(total-toremove)
+    # trunc_pol = policies[:total]
+    # print(trunc_pol)
 
 generate_anonymized_data()
