@@ -6,8 +6,6 @@ def generate_anonymized_data():
     """
 	Function that generates more anonymized data starting from a base ridm file already anonymized adding characters 'ABC' then combine it
     for times defined 
-
-    TODO A stop at wanted filesize should be implemented
     """ 
     times = int(input("Please enter how many times you want to enlarge the datasets: (exponential)\n"))
     print(f"The enlargment will be compounded by {times} times")
@@ -51,7 +49,6 @@ def generate_anonymized_data():
         policies_frames = [policies, new_policies]
         concat_policies = pd.concat(policies_frames)
 
-    #TODO Check column fix
     claims_columns = ['ID', 'PERSON_ID','PROVIDER_ID', 'POLICY_ID', 'LOCAL_CLAIM_ID', 'CLAIM_COUNTRY','LOCAL_COVERAGE', 'NETWORK_TREATMENT', 'NETWORK_TYPE','TREATMENT_START_DATE', 'TREATMENT_END_DATE', 'BILLING_DATE','SUBMISSION_DATE', 'PRE_APPROVAL_DATE', 'APPROVAL_DATE','SETTLEMENT_DATE', 'CLAIM_AMOUNT', 'AMOUNT_PAID_BY_CAPTIVE','REIMBURSED_AMOUNT', 'REIMBURSABLE_AMOUNT', 'CURRENCY_CLAIM_AMOUNT','CURRENCY_AMOUNT_PAID_BY_CAPTIVE', 'CURRENCY_REIMBURSED_AMOUNT','CURRENCY_REIMBURSABLE_AMOUNT', 'REIMBURSEMENT_TYPE', 'CLAIM_STATUS','CLAIM_REJECTION_REASON', 'MEDICAL_AREA']
     persons_columns = ['ID','DUMMY_PERSON_FLAG', 'DATE_OF_BIRTH', 'MEMBER_TYPE', 'GENDER','OCCUPATION', 'LOCATION', 'LOCATION_TYPE', 'REGION']
     policies_columns = ['ID','BUSINESS_RELATION_ID', 'CERTIFICATE_ID', 'CONTRACT_ID', 'PRODUCT_ID','LOCAL_POLICY_ID', 'NO_OF_RISKS', 'POLICY_START_DATE','POLICY_END_DATE', 'NEW_BUSINESS']
@@ -63,23 +60,26 @@ def generate_anonymized_data():
     #TODO instead of saving it now save it in fix size after asking if it is fine
     new_matched_claims.to_csv("/Users/ludovicocesaro/Downloads/test/0/claims.csv",index=False)
     concat_persons.to_csv("/Users/ludovicocesaro/Downloads/test/0/persons.csv",index=False)
-    concat_policies.to_csv("/Users/ludovicocesaro/Downloads/test/0/policies.csv",index=False)
-            
-    fix_size(new_matched_claims, concat_persons, concat_policies)
+    concat_policies.to_csv("/Users/ludovicocesaro/Downloads/test/0/policies.csv",index=False)  
+
+    fix_size(new_matched_claims, concat_persons, concat_policies) # correct
 
 # TODO Finish fix size
-def fix_size(claims, policies, persons):
+def fix_size(claims, persons, policies):
     byte = 1000000
-    print('Memory usage of policies/claims/persons tables')
-    # print(claims.memory_usage().sum()/byte, 'Mb')
-    # print(persons.memory_usage().sum()/byte, 'Mb')
-    # print('Initial size policies:', policies.memory_usage().sum()/byte, 'Mb', 'enlarged:', concat_policies.memory_usage().sum()/byte)
+    print('Tables after enlargement')
+    print('Size claims:', claims.memory_usage().sum()/byte, 'Mb')
+    print('Size persons:', persons.memory_usage().sum()/byte, 'Mb')
+    print('Size policies:', policies.memory_usage().sum()/byte, 'Mb')
 
-    # decrease = int(input("How much do you want to decrease the size? % "))
-    # total = len(policies.index)
-    # toremove = total*decrease/100
-    # print(total-toremove)
-    # trunc_pol = policies[:total]
-    # print(trunc_pol)
+    decrease = int(input("How much do you want to decrease the size in percentage?"))
+    total = len(policies.index)
+    toremove = round(total*decrease/100)
+    last = total-toremove
+    print(policies[:last])
+
+    # persons
+
+    # claims
 
 generate_anonymized_data()
