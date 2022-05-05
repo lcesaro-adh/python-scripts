@@ -1,9 +1,10 @@
 import pandas as pd
 pd.set_option("display.max_columns", None)
-def generate_anonymized_data():
+byte = 1000000
+def generate_data():
     """
-    Function that generates more anonymized data starting from a base ridm file already anonymized adding characters 'ABC' then combine it
-    for times defined
+    Function that generates more anonymized data starting from a base ridm file already anonymized adding characters 'ABC' then compound it
+    for defined times then call fix_size()
     """
     times = int(
         input(
@@ -11,13 +12,15 @@ def generate_anonymized_data():
         )
     )
     print(f"The enlargment will be compounded by {times} times")
+
     claims = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/claims.csv")
     persons = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/persons.csv")
     policies = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/policies.csv")
+
     print("Tables before enlargement")
-    print("Size claims:", claims.memory_usage().sum() / 1000000, "Mb")
-    print("Size persons:", persons.memory_usage().sum() / 1000000, "Mb")
-    print("Size policies:", policies.memory_usage().sum() / 1000000, "Mb")
+    print("Size claims:", claims.memory_usage().sum() / byte, "Mb")
+    print("Size persons:", persons.memory_usage().sum() / byte, "Mb")
+    print("Size policies:", policies.memory_usage().sum() / byte, "Mb")
     for x in range(times):
         index = len(claims.index)
         # Creating new claims, persons , policies + dummy primary keys creation
@@ -46,7 +49,11 @@ def generate_anonymized_data():
         policies_frames = [policies, new_policies]
         concat_policies = pd.concat(policies_frames)
     fix_size(new_matched_claims, concat_persons, concat_policies)
+
 def fix_size(claims, persons, policies):
+    """
+    Function called after generate_data(), asks if the size is okay otherwise reduce the size by percentage, remove unnecessary columns and save as csv
+    """
     claims_columns = [
         "ID",
         "PERSON_ID",
@@ -106,7 +113,6 @@ def fix_size(claims, persons, policies):
         {"tableName": "persons", "dataframe": persons, "columns": persons_columns},
         {"tableName": "policies", "dataframe": policies, "columns": policies_columns},
     ]
-    byte = 1000000
     print("Tables after enlargement")
     print("Size claims:", claims.memory_usage().sum() / byte, "Mb")
     print("Size persons:", persons.memory_usage().sum() / byte, "Mb")
@@ -136,7 +142,7 @@ def fix_size(claims, persons, policies):
         inplace=True,
     )
         data["dataframe"].to_csv(("/Users/ludovicocesaro/Downloads/test/0/{}.csv").format(data["tableName"]))
-        print("Table", data["tableName"],"correclty saved")
+        print("Table", data["tableName"],"correctly saved")
     raise SystemExit
         
-generate_anonymized_data()
+generate_data()
