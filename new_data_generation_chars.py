@@ -56,74 +56,6 @@ def generate_anonymized_data():
         policies_frames = [policies, new_policies]
         concat_policies = pd.concat(policies_frames)
 
-    claims_columns = [
-        "ID",
-        "PERSON_ID",
-        "PROVIDER_ID",
-        "POLICY_ID",
-        "LOCAL_CLAIM_ID",
-        "CLAIM_COUNTRY",
-        "LOCAL_COVERAGE",
-        "NETWORK_TREATMENT",
-        "NETWORK_TYPE",
-        "TREATMENT_START_DATE",
-        "TREATMENT_END_DATE",
-        "BILLING_DATE",
-        "SUBMISSION_DATE",
-        "PRE_APPROVAL_DATE",
-        "APPROVAL_DATE",
-        "SETTLEMENT_DATE",
-        "CLAIM_AMOUNT",
-        "AMOUNT_PAID_BY_CAPTIVE",
-        "REIMBURSED_AMOUNT",
-        "REIMBURSABLE_AMOUNT",
-        "CURRENCY_CLAIM_AMOUNT",
-        "CURRENCY_AMOUNT_PAID_BY_CAPTIVE",
-        "CURRENCY_REIMBURSED_AMOUNT",
-        "CURRENCY_REIMBURSABLE_AMOUNT",
-        "REIMBURSEMENT_TYPE",
-        "CLAIM_STATUS",
-        "CLAIM_REJECTION_REASON",
-        "MEDICAL_AREA",
-    ]
-    persons_columns = [
-        "ID",
-        "DUMMY_PERSON_FLAG",
-        "DATE_OF_BIRTH",
-        "MEMBER_TYPE",
-        "GENDER",
-        "OCCUPATION",
-        "LOCATION",
-        "LOCATION_TYPE",
-        "REGION",
-    ]
-    policies_columns = [
-        "ID",
-        "BUSINESS_RELATION_ID",
-        "CERTIFICATE_ID",
-        "CONTRACT_ID",
-        "PRODUCT_ID",
-        "LOCAL_POLICY_ID",
-        "NO_OF_RISKS",
-        "POLICY_START_DATE",
-        "POLICY_END_DATE",
-        "NEW_BUSINESS",
-    ]
-
-    # Check columns and fix properly
-    new_matched_claims.drop(
-        columns=[col for col in new_matched_claims if col not in claims_columns],
-        inplace=True,
-    )
-    concat_persons.drop(
-        columns=[col for col in concat_persons if col not in persons_columns],
-        inplace=True,
-    )
-    concat_policies.drop(
-        columns=[col for col in concat_policies if col not in policies_columns],
-        inplace=True,
-    )
-
     fix_size(new_matched_claims, concat_persons, concat_policies)
 
 def fix_size(claims, persons, policies):
@@ -142,15 +74,7 @@ def fix_size(claims, persons, policies):
 
     answer = input("Do you accept the current sizes? y/n: ")
 
-    if answer == "y":
-        print(claims, 'CLAIMS')
-        claims.to_csv("/Users/ludovicocesaro/Downloads/test/0/claims.csv")
-        persons.to_csv("/Users/ludovicocesaro/Downloads/test/0/persons.csv")
-        policies.to_csv("/Users/ludovicocesaro/Downloads/test/0/policies.csv")
-        print('Tables correcly saved.')
-        raise SystemExit
-
-    else:
+    if answer == "n":
         decrease = int(
             input("How much do you want to decrease the size in percentage? ")
         )
@@ -158,18 +82,19 @@ def fix_size(claims, persons, policies):
             total = len(data["dataframe"].index)
             toremove = round(total * decrease / 100)
             last = total - toremove
-            final_decreased = data["dataframe"][:last]
-            print(final_decreased, 'FINAL')
-            final_decreased.to_csv(
-                ("/Users/ludovicocesaro/Downloads/test/0/{}.csv").format(
-                    data["tableName"]
-                )
-            )
+            #final_decreased = data["dataframe"][:last]
+            #print(final_decreased, 'Increased')
             print(
                 data["tableName"],
-                "reduced and saved. Current size",
+                "reduced. Current size",
                 data["dataframe"][:last].memory_usage().sum() / byte,
                 "Mb",
             )
+    
+    for data in tables:
+        data["dataframe"].to_csv(("/Users/ludovicocesaro/Downloads/test/0/{}.csv").format(data["tableName"]))
+        print("Table,", data["tableName"],"correctly saved")
+        raise SystemExit
+        
 
 generate_anonymized_data()
