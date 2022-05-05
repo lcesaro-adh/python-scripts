@@ -127,7 +127,7 @@ def generate_anonymized_data():
 # TODO Finish fix size
 def fix_size(claims, persons, policies):
 
-    tables = [claims, persons, policies]
+    tables = [{"tableName":'claims', "dataframe":claims},{'tableName':'persons', "dataframe": persons},{'tableName':'policies', "dataframe": policies}]
     byte = 1000000
 
     print("Tables after enlargement")
@@ -138,6 +138,7 @@ def fix_size(claims, persons, policies):
     answer = input("Do you accept the current sizes? y/n: ")
 
     if answer == "y":
+        #TODO: Save
         raise SystemExit
 
     else:
@@ -145,19 +146,22 @@ def fix_size(claims, persons, policies):
             input("How much do you want to decrease the size in percentage?")
         )
         for data in tables:
-            total = len(data.index)
+            print(data["tableName"])
+            total = len(data["dataframe"].index)
             toremove = round(total * decrease / 100)
             last = total - toremove
-            final_decreased = data[:last]
+            final_decreased = data["dataframe"][:last]
             # FORMAT DOES NOT WORK, MUST HAVE TABLE NAME NOT DATAFRAME
-            name = data.tablename
+            #name = data.tablename
+            print(data, 'data')
+
             final_decreased.to_csv(
-                ("/Users/ludovicocesaro/Downloads/test/0/{}.csv").format(name)
+                ("/Users/ludovicocesaro/Downloads/test/0/{}.csv").format(data["tableName"])
             )
             print(
-                name,
+                data["tableName"],
                 "reduced and saved. Current size",
-                name.memory_usage().sum() / byte,
+                data["dataframe"].memory_usage().sum() / byte,
                 "Mb",
             )
 
