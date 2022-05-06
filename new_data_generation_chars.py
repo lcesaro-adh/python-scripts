@@ -1,18 +1,15 @@
 import pandas as pd
 pd.set_option("display.max_columns", None)
+pd.options.mode.chained_assignment = None
+
 byte = 1000000
 def generate_data():
     """
     Function that generates more anonymized data starting from a base ridm file already anonymized adding characters 'ABC' then compound it
     for defined times then call fix_size()
     """
-    times = int(
-        input(
-            "Please enter how many times you want to enlarge exponentially the initial datasets\n"
-        )
-    )
-    print(f"The enlargment will be compounded by {times} times")
-
+    # Add nice for with tables (less verbose)
+    print('reading tables...')
     claims = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/claims.csv")
     persons = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/persons.csv")
     policies = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/policies.csv")
@@ -21,6 +18,14 @@ def generate_data():
     print("Size claims:", claims.memory_usage().sum() / byte, "Mb")
     print("Size persons:", persons.memory_usage().sum() / byte, "Mb")
     print("Size policies:", policies.memory_usage().sum() / byte, "Mb")
+
+    times = int(
+        input(
+            "Please enter how many times you want to enlarge exponentially the initial datasets\n"
+        )
+    )
+    print(f"The enlargment will be compounded by {times} times")
+
     for x in range(times):
         index = len(claims.index)
         # Creating new claims, persons , policies + dummy primary keys creation
@@ -117,32 +122,37 @@ def fix_size(claims, persons, policies):
     print("Size claims:", claims.memory_usage().sum() / byte, "Mb")
     print("Size persons:", persons.memory_usage().sum() / byte, "Mb")
     print("Size policies:", policies.memory_usage().sum() / byte, "Mb")
-    print('Saving...')
     answer = input("Do you accept the current sizes? y/n: ")
     if answer == "n":
         decrease = int(
             input("How much do you want to decrease the size in percentage? ")
         )
-        for data in tables:
+        for data in tables: # decrease size
             total = len(data["dataframe"].index)
             toremove = round(total * decrease / 100)
             last = total - toremove
-            #final_decreased = data["dataframe"][:last]
-            #print(final_decreased, 'Increased')
+            data_decreased = data["dataframe"][:last]
+            #print(data_decreased, 'data_decreased')
             print(
-                data["tableName"],
+                "Saving...", data["tableName"],
                 "reduced. Current size",
                 data["dataframe"][:last].memory_usage().sum() / byte,
                 "Mb",
             )
+            data['dataframe'][:last].drop(
+            columns=[col for col in data['dataframe'] if col not in data['columns']],
+            inplace=True,
+            )
+            data["dataframe"][:last].to_csv(("/Users/ludovicocesaro/Downloads/test/0/{}.csv").format(data["tableName"]))
 
-    for data in tables:
-        data['dataframe'].drop(
-        columns=[col for col in data['dataframe'] if col not in data['columns']],
-        inplace=True,
-    )
-        data["dataframe"].to_csv(("/Users/ludovicocesaro/Downloads/test/0/{}.csv").format(data["tableName"]))
-        print("Table", data["tableName"],"correctly saved")
-    raise SystemExit
+    else:
+        for data in tables:
+            data['dataframe'].drop(
+            columns=[col for col in data['dataframe'] if col not in data['columns']],
+            inplace=True,
+            )
+            data["dataframe"].to_csv(("/Users/ludovicocesaro/Downloads/test/0/{}.csv").format(data["tableName"]))
+            print("Table", data["tableName"],"correctly saved")
+        raise SystemExit
         
 generate_data()
