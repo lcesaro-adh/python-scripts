@@ -118,10 +118,11 @@ def fix_size(claims, persons, policies):
         {"tableName": "persons", "dataframe": persons, "columns": persons_columns},
         {"tableName": "policies", "dataframe": policies, "columns": policies_columns},
     ]
+
     print("Tables after enlargement")
-    print("Size claims:", claims.memory_usage().sum() / byte, "Mb")
-    print("Size persons:", persons.memory_usage().sum() / byte, "Mb")
-    print("Size policies:", policies.memory_usage().sum() / byte, "Mb")
+    for data in tables:
+        print("Size",data["tableName"],data["dataframe"].memory_usage().sum() / byte, "Mb")
+
     answer = input("Do you accept the current sizes? y/n: ")
     if answer == "n":
         decrease = int(
