@@ -8,13 +8,12 @@ def generate_data():
     Function that generates more anonymized data starting from a base ridm file already anonymized adding characters 'ABC' then compound it
     for defined times then call fix_size()
     """
-    # Add nice for with tables (less verbose)
-    print('reading tables...')
-    claims = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/claims.csv")
-    persons = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/persons.csv")
-    policies = pd.read_csv("/Users/ludovicocesaro/Downloads/test/0/policies.csv")
+    print('reading tables...') #Change
+    claims = pd.read_csv("/Users/ludovicocesaro/Downloads/test/claims.csv")
+    persons = pd.read_csv("/Users/ludovicocesaro/Downloads/test/persons.csv")
+    policies = pd.read_csv("/Users/ludovicocesaro/Downloads/test/policies.csv")
 
-    print("Tables before enlargement")
+    print("Tables before enlargement")  #Change
     print("Size claims:", claims.memory_usage().sum() / byte, "Mb")
     print("Size persons:", persons.memory_usage().sum() / byte, "Mb")
     print("Size policies:", policies.memory_usage().sum() / byte, "Mb")
@@ -26,8 +25,8 @@ def generate_data():
     )
     print(f"The enlargment will be compounded by {times} times")
 
-    for x in range(times):
-        index = len(claims.index)
+    for x in range(times): 
+        index = len(claims.index) #Change (index of the table that contains both)
         # Creating new claims, persons , policies + dummy primary keys creation
         new_claims = claims.copy()
         new_claims["ID"] = new_claims["ID"] + "ABC"
@@ -49,10 +48,8 @@ def generate_data():
         new_matched_claims.drop(["index"], axis=1, inplace=True)
         claims = new_matched_claims
         print(new_matched_claims)
-        persons_frames = [persons, new_persons]
-        concat_persons = pd.concat(persons_frames)
-        policies_frames = [policies, new_policies]
-        concat_policies = pd.concat(policies_frames)
+        concat_persons = pd.concat([persons, new_persons])
+        concat_policies = pd.concat([policies, new_policies])
     fix_size(new_matched_claims, concat_persons, concat_policies)
 
 def fix_size(claims, persons, policies):
@@ -133,26 +130,24 @@ def fix_size(claims, persons, policies):
             toremove = round(total * decrease / 100)
             last = total - toremove
             data_decreased = data["dataframe"][:last]
-            #print(data_decreased, 'data_decreased')
             print(
                 "Saving...", data["tableName"],
                 "reduced. Current size",
-                data["dataframe"][:last].memory_usage().sum() / byte,
+                data_decreased.memory_usage().sum() / byte,
                 "Mb",
             )
             data['dataframe'][:last].drop(
             columns=[col for col in data['dataframe'] if col not in data['columns']],
             inplace=True,
             )
-            data["dataframe"][:last].to_csv(("/Users/ludovicocesaro/Downloads/test/0/{}.csv").format(data["tableName"]))
-
+            data["dataframe"][:last].to_csv(("/Users/ludovicocesaro/Downloads/test/{}.csv").format(data["tableName"]))
     else:
         for data in tables:
             data['dataframe'].drop(
             columns=[col for col in data['dataframe'] if col not in data['columns']],
             inplace=True,
             )
-            data["dataframe"].to_csv(("/Users/ludovicocesaro/Downloads/test/0/{}.csv").format(data["tableName"]))
+            data["dataframe"].to_csv(("/Users/ludovicocesaro/Downloads/test/{}.csv").format(data["tableName"]))
             print("Table", data["tableName"],"correctly saved")
         raise SystemExit
         
