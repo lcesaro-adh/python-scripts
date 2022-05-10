@@ -1,107 +1,155 @@
 import pandas as pd
-import subprocess
-import os
-import sys
-
 pd.set_option("display.max_columns", None)
-d = dict(os.environ)
-# # SETUP Virtual Environment
-# py_env = subprocess.check_call([sys.executable,"-m","pyenv", "activate", "dp"])
-# py_path = subprocess.check_call([sys.executable,"-m","export", "PYTHONPATH=$PWD:$PYTHONPATH"])
-# py_path2 = subprocess.check_call([sys.executable,"-m","echo", "$PYTHONPATH"])
-# #env_req = subprocess.run(["pip", "install", "-r", "/Users/ludovicocesaro/Desktop/Files/Reply/Allianz/Projects/datahub-pipelines/requirements.txt"], shell=True, capture_output=True)
-# env_req = subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "/Users/ludovicocesaro/Desktop/Files/Reply/Allianz/Projects/datahub-pipelines/requirements.txt"])
-# print(py_env, py_path,py_path2, env_req,'status setup')
+pd.options.mode.chained_assignment = None
 
-def generate_anonymized_data():
+byte = 1000000
+def generate_data():
     """
-	Function that generates more anonymized data starting from a base ridm file already anonymized then combine it.
+    Function that generates more anonymized data starting from a base ridm file already anonymized adding characters 'ABC' then compound it
+    for defined times then call fix_size()
+    """
+    #Change -------
+    print('reading tables...') 
+    claims = pd.read_csv("/Users/ludovicocesaro/Downloads/test/claims.csv")
+    persons = pd.read_csv("/Users/ludovicocesaro/Downloads/test/persons.csv")
+    policies = pd.read_csv("/Users/ludovicocesaro/Downloads/test/policies.csv")
 
-    The function asks for how many times the base ridm file want to be enlarged.
-    """ 
-    times = int(input("Please enter how many times you want to enlarge the datasets:\n"))
-    print(f"You choosed to enlarge by {times} times")
+    print("Tables before enlargement")
+    print("Size claims:", claims.memory_usage().sum() / byte, "Mb")
+    print("Size persons:", persons.memory_usage().sum() / byte, "Mb")
+    print("Size policies:", policies.memory_usage().sum() / byte, "Mb")
+    # ------------
+
+    times = int(
+        input(
+            "Please enter how many times you want to enlarge exponentially the initial datasets\n"
+        )
+    )
+    print(f"The enlargment will be compounded by {times} times")
 
     for x in range(times):
-        print('Anonymization run', x+1)
-        # RUN ANONYMIZATION SCRIPT
-        # #TODO: FIX python_env & env_var / make work command
-        # next = x+1
-        # anonymize = subprocess.run(
-        #     [
-        #         f"python",
-        #         "/Users/ludovicocesaro/Desktop/Files/Reply/Allianz/Projects/datahub-pipelines/tasks/common/anonymization/secure_anonymize.py",
-        #         "/Users/ludovicocesaro/Downloads/test/{}".format(x),
-        #         "/Users/ludovicocesaro/Downloads/test/{}".format(next)
-        #     ])
-        # # command for anonymization
-        # # TODO: path must be generalized for working in all environments
-
-    combine(times)
-
-def combine(times):
-    for x in range(times):
-        print(x, 'time')
-        # Extracting the old policies and new
-        old_policies = pd.read_csv("/Users/ludovicocesaro/Downloads/test/{}/policies.csv".format(x))
-        new_policies = pd.read_csv("/Users/ludovicocesaro/Downloads/test/{}/policies.csv".format(x+1))
-
-        old_persons = pd.read_csv("/Users/ludovicocesaro/Downloads/test/{}/persons.csv".format(x))
-        new_persons = pd.read_csv("/Users/ludovicocesaro/Downloads/test/{}/persons.csv".format(x+1))
-
-        old_claims = pd.read_csv("/Users/ludovicocesaro/Downloads/test/{}/claims.csv".format(x))
-        new_claims = pd.read_csv("/Users/ludovicocesaro/Downloads/test/{}/claims.csv".format(x+1))
-
-        index = 281533 # Base index
-
-        # _2 Containing ALL (new and old concatenated)
-        po_frames = [old_policies, new_policies]
-        policies_2 = pd.concat(po_frames)
-
-        pe_frames = [old_persons, new_persons]
-        persons_2 = pd.concat(pe_frames)
-
-        claims_frames = [old_claims, new_claims]
-        claims_2 = pd.concat(claims_frames)
-
-        # Removing unnecessary columns
-        # policies_2.drop('Unnamed: 0', axis=1, inplace=True)
-        # persons_2.drop('Unnamed: 0', axis=1, inplace=True)
-        # claims_2.drop('Unnamed: 0', axis=1, inplace=True)
-
-        # Taking random ids from persons to make them match
-        random_persons = new_persons.sample(n = round(index/(x+1))) #TODO: Check
+        #Change -------
+        index = len(claims.index) #Change (index of the table that contains both)
+        # Creating new claims, persons , policies + dummy primary keys creation
+        new_claims = claims.copy()
+        new_persons = persons.copy()
+        new_persons["ID"] = new_persons["ID"] + "ABC"
+        new_policies = policies.copy()
+        new_policies["ID"] = new_policies["ID"] + "ABC"
+        # Taking random ids from persons and policies to make them match with claims foreign keys
+        random_persons = new_persons.sample(n=index * pow(2, x), replace=True) # index with pow for compounding
         random_persons.reset_index(inplace=True)
-        random_persons['ID'].head(10)
-
-        # Taking random ids from policies to make them match
-        random_policies = new_policies.sample(n = round(index/(x+1))) #TODO: Check
+        random_policies = new_policies.sample(n=index * pow(2, x), replace=True)
         random_policies.reset_index(inplace=True)
-        random_policies['ID'].head(10)
+        # Replacing keys to new generated claims
+        new_claims["PERSON_ID"] = random_persons["ID"]
+        new_claims["POLICY_ID"] = random_policies["ID"]
+        new_matched_claims = pd.concat([claims, new_claims]) # New claims and old claims merged
+        new_matched_claims.reset_index(inplace=True)
+        new_matched_claims.drop(["index"], axis=1, inplace=True)
+        claims = new_matched_claims
+        print(claims)
+        concat_persons = pd.concat([persons, new_persons])
+        concat_policies = pd.concat([policies, new_policies])
+    fix_size(claims, concat_persons, concat_policies)
 
+def fix_size(claims, persons, policies):
+    """
+    Function called after generate_data(), asks if the size is okay otherwise reduce the size by percentage, remove unnecessary columns and save as csv
+    """
+    claims_columns = [
+        "ID",
+        "PERSON_ID",
+        "PROVIDER_ID",
+        "POLICY_ID",
+        "LOCAL_CLAIM_ID",
+        "CLAIM_COUNTRY",
+        "LOCAL_COVERAGE",
+        "NETWORK_TREATMENT",
+        "NETWORK_TYPE",
+        "TREATMENT_START_DATE",
+        "TREATMENT_END_DATE",
+        "BILLING_DATE",
+        "SUBMISSION_DATE",
+        "PRE_APPROVAL_DATE",
+        "APPROVAL_DATE",
+        "SETTLEMENT_DATE",
+        "CLAIM_AMOUNT",
+        "AMOUNT_PAID_BY_CAPTIVE",
+        "REIMBURSED_AMOUNT",
+        "REIMBURSABLE_AMOUNT",
+        "CURRENCY_CLAIM_AMOUNT",
+        "CURRENCY_AMOUNT_PAID_BY_CAPTIVE",
+        "CURRENCY_REIMBURSED_AMOUNT",
+        "CURRENCY_REIMBURSABLE_AMOUNT",
+        "REIMBURSEMENT_TYPE",
+        "CLAIM_STATUS",
+        "CLAIM_REJECTION_REASON",
+        "MEDICAL_AREA",
+    ]
+    persons_columns = [
+        "ID",
+        "DUMMY_PERSON_FLAG",
+        "DATE_OF_BIRTH",
+        "MEMBER_TYPE",
+        "GENDER",
+        "OCCUPATION",
+        "LOCATION",
+        "LOCATION_TYPE",
+        "REGION",
+    ]
+    policies_columns = [
+        "ID",
+        "BUSINESS_RELATION_ID",
+        "CERTIFICATE_ID",
+        "CONTRACT_ID",
+        "PRODUCT_ID",
+        "LOCAL_POLICY_ID",
+        "NO_OF_RISKS",
+        "POLICY_START_DATE",
+        "POLICY_END_DATE",
+        "NEW_BUSINESS",
+    ]
 
-        # Add random PERSONS from persons new for matching
-        # Add random POLICY ID from policies new for matching 
-        with pd.option_context('mode.chained_assignment',None):
-            index = index*(x+1) #TODO Check dynamic index if it's working always /  check number if its really progressive after runs
-            print(index, "INDEX")
-            replace_pp = claims_2[index:]
-            replace_pp.reset_index(inplace=True)
-            replace_pp['PERSON_ID'] = random_persons['ID'].copy()
-            replace_pp['POLICY_ID'] = random_policies['ID'].copy()
-            #replace_pp.drop(['index'], axis = 1, inplace=True)
-            new_matched_claims = replace_pp
-            new_matched_claims # has random person_id
+    tables = [
+        {"tableName": "claims", "dataframe": claims, "columns": claims_columns},
+        {"tableName": "persons", "dataframe": persons, "columns": persons_columns},
+        {"tableName": "policies", "dataframe": policies, "columns": policies_columns},
+    ]
+#------ 
+    print("Tables after enlargement")
+    for data in tables:
+        print("Size",data["tableName"],data["dataframe"].memory_usage().sum() / byte, "Mb")
 
-        # claims enlarged dataframe with PERSON_ID and POLICY_ID primary key coming from persons and policies for matching
-        frames = [old_claims, new_matched_claims]
-        claims2_new = pd.concat(frames)
-        claims2_new.reset_index(inplace=True)
-        claims2_new.drop(["level_0","index"], axis = 1, inplace=True)
-        print("Claims dataset enlarged and matched", claims2_new)
-        claims2_new.to_csv(("/Users/ludovicocesaro/Downloads/test/{}/claims.csv").format(x+1))
-        persons_2.to_csv(("/Users/ludovicocesaro/Downloads/test/{}/persons.csv").format(x+1))
-        policies_2.to_csv(("/Users/ludovicocesaro/Downloads/test/{}/policies.csv").format(x+1))
-        print("Combination of the anonymized dataset completed", x+1, "run(s) of ", times)
-    print('ok')
-generate_anonymized_data()
+    answer = input("Do you accept the current sizes? y/n: ")
+    if answer == "n":
+        decrease = int(
+            input("How much do you want to decrease the size in percentage? ")
+        )
+        for data in tables: # decrease size
+            total = len(data["dataframe"].index)
+            toremove = round(total * decrease / 100)
+            last = total - toremove
+            data_decreased = data["dataframe"][:last]
+            print(
+                "Saving...", data["tableName"],
+                "reduced. Current size",
+                data_decreased.memory_usage().sum() / byte,
+                "Mb",
+            )
+            data_decreased.drop(
+            columns=[col for col in data['dataframe'] if col not in data['columns']],
+            inplace=True,
+            )
+            data["dataframe"][:last].to_csv(("/Users/ludovicocesaro/Downloads/test/{}.csv").format(data["tableName"]))
+    else:
+        for data in tables:
+            data['dataframe'].drop(
+            columns=[col for col in data['dataframe'] if col not in data['columns']],
+            inplace=True,
+            )
+            data["dataframe"].to_csv(("/Users/ludovicocesaro/Downloads/test/{}.csv").format(data["tableName"]))
+            print("Table", data["tableName"],"correctly saved")
+        raise SystemExit
+        
+generate_data()

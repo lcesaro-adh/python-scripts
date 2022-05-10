@@ -8,15 +8,17 @@ def generate_data():
     Function that generates more anonymized data starting from a base ridm file already anonymized adding characters 'ABC' then compound it
     for defined times then call fix_size()
     """
-    print('reading tables...') #Change
+    #Change -------
+    print('reading tables...') 
     claims = pd.read_csv("/Users/ludovicocesaro/Downloads/test/claims.csv")
     persons = pd.read_csv("/Users/ludovicocesaro/Downloads/test/persons.csv")
     policies = pd.read_csv("/Users/ludovicocesaro/Downloads/test/policies.csv")
 
-    print("Tables before enlargement")  #Change
+    print("Tables before enlargement")
     print("Size claims:", claims.memory_usage().sum() / byte, "Mb")
     print("Size persons:", persons.memory_usage().sum() / byte, "Mb")
     print("Size policies:", policies.memory_usage().sum() / byte, "Mb")
+    # ------------
 
     times = int(
         input(
@@ -25,7 +27,8 @@ def generate_data():
     )
     print(f"The enlargment will be compounded by {times} times")
 
-    for x in range(times): 
+    for x in range(times):
+        #Change -------
         index = len(claims.index) #Change (index of the table that contains both)
         # Creating new claims, persons , policies + dummy primary keys creation
         new_claims = claims.copy()
@@ -42,8 +45,7 @@ def generate_data():
         # Replacing keys to new generated claims
         new_claims["PERSON_ID"] = random_persons["ID"]
         new_claims["POLICY_ID"] = random_policies["ID"]
-        claims_frames = [claims, new_claims]  # New claims and old claims merged
-        new_matched_claims = pd.concat(claims_frames)
+        new_matched_claims = pd.concat([claims, new_claims]) # New claims and old claims merged
         new_matched_claims.reset_index(inplace=True)
         new_matched_claims.drop(["index"], axis=1, inplace=True)
         claims = new_matched_claims
@@ -115,7 +117,7 @@ def fix_size(claims, persons, policies):
         {"tableName": "persons", "dataframe": persons, "columns": persons_columns},
         {"tableName": "policies", "dataframe": policies, "columns": policies_columns},
     ]
-
+#------ 
     print("Tables after enlargement")
     for data in tables:
         print("Size",data["tableName"],data["dataframe"].memory_usage().sum() / byte, "Mb")
@@ -136,11 +138,11 @@ def fix_size(claims, persons, policies):
                 data_decreased.memory_usage().sum() / byte,
                 "Mb",
             )
-            data['dataframe'][:last].drop(
+            data_decreased.drop(
             columns=[col for col in data['dataframe'] if col not in data['columns']],
             inplace=True,
             )
-            data["dataframe"][:last].to_csv(("/Users/ludovicocesaro/Downloads/test/{}.csv").format(data["tableName"]))
+            data_decreased.to_csv(("/Users/ludovicocesaro/Downloads/test/{}.csv").format(data["tableName"]))
     else:
         for data in tables:
             data['dataframe'].drop(
