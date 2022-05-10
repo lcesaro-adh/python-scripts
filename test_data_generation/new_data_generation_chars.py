@@ -10,9 +10,9 @@ def generate_data():
     """
     #Change -------
     print('reading tables...') 
-    claims = pd.read_csv("/Users/ludovicocesaro/Downloads/test/claims.csv")
-    persons = pd.read_csv("/Users/ludovicocesaro/Downloads/test/persons.csv")
-    policies = pd.read_csv("/Users/ludovicocesaro/Downloads/test/policies.csv")
+    claims = pd.read_csv("test_data_generation/input/claims.csv")
+    persons = pd.read_csv("test_data_generation/input/persons.csv")
+    policies = pd.read_csv("test_data_generation/input/policies.csv")
 
     print("Tables before enlargement")
     print("Size claims:", claims.memory_usage().sum() / byte, "Mb")
@@ -142,15 +142,14 @@ def fix_size(claims, persons, policies):
             columns=[col for col in data['dataframe'] if col not in data['columns']],
             inplace=True,
             )
-            data_decreased.to_csv(("/Users/ludovicocesaro/Downloads/test/{}.csv").format(data["tableName"]))
+            data_decreased.to_csv(("test_data_generation/output/{}.csv").format(data["tableName"]))
     else:
         for data in tables:
             data['dataframe'].drop(
             columns=[col for col in data['dataframe'] if col not in data['columns']],
             inplace=True,
             )
-            data["dataframe"].to_csv(("/Users/ludovicocesaro/Downloads/test/{}.csv").format(data["tableName"]))
+            data["dataframe"].to_csv(("test_data_generation/output/{}.csv").format(data["tableName"]))
             print("Table", data["tableName"],"correctly saved")
-        raise SystemExit
         
 generate_data()

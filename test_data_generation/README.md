@@ -9,4 +9,6 @@ Check that the reading folder and tables are correct and that match with the key
 - Asks if the size is fine after the enlargement
 - If the final size was not fine you define the reduction in percentage and after it takes place saves the outcome
 ### Different enlargement
-You can edit the input tables and the key match to enlarge any table
+You can edit the input tables and the primary keys to enlarge whatever table you want
+You need to modify within #Change ------ 
+'#------ 
