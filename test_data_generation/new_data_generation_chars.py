@@ -8,7 +8,6 @@ def generate_data():
     Function that generates more anonymized data starting from a base ridm file already anonymized adding characters 'ABC' then compound it
     for defined times then call fix_size()
     """
-    #Change -------
     print('reading tables...') 
     claims = pd.read_csv("test_data_generation/input/claims.csv")
     persons = pd.read_csv("test_data_generation/input/persons.csv")
@@ -18,7 +17,6 @@ def generate_data():
     print("Size claims:", claims.memory_usage().sum() / byte, "Mb")
     print("Size persons:", persons.memory_usage().sum() / byte, "Mb")
     print("Size policies:", policies.memory_usage().sum() / byte, "Mb")
-    # ------------
 
     times = int(
         input(
@@ -28,23 +26,15 @@ def generate_data():
     print(f"The enlargment will be compounded by {times} times")
 
     for x in range(times):
-        #Change -------
         index = len(claims.index) #Change (index of the table that contains both)
         # Creating new claims, persons , policies + dummy primary keys creation
         new_claims = claims.copy()
-        new_claims["ID"] = new_claims["ID"] + "ABC"
         new_persons = persons.copy()
         new_persons["ID"] = new_persons["ID"] + "ABC"
         new_policies = policies.copy()
         new_policies["ID"] = new_policies["ID"] + "ABC"
-        # Taking random ids from persons and policies to make them match with claims foreign keys
-        random_persons = new_persons.sample(n=index * pow(2, x), replace=True) # index with pow for compounding
-        random_persons.reset_index(inplace=True)
-        random_policies = new_policies.sample(n=index * pow(2, x), replace=True)
-        random_policies.reset_index(inplace=True)
-        # Replacing keys to new generated claims
-        new_claims["PERSON_ID"] = random_persons["ID"]
-        new_claims["POLICY_ID"] = random_policies["ID"]
+        new_claims["PERSON_ID"] = new_persons["ID"]
+        new_claims["POLICY_ID"] = new_policies["ID"]
         new_matched_claims = pd.concat([claims, new_claims]) # New claims and old claims merged
         new_matched_claims.reset_index(inplace=True)
         new_matched_claims.drop(["index"], axis=1, inplace=True)
