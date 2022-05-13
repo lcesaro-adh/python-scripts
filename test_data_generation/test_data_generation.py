@@ -16,7 +16,7 @@ def readRidm(path, sourcefiles): # Read ridm and save as dictionary
     print("start read ridm from path: " + path)
     read_files = {}
     for filename in sourcefiles:
-        read_files[filename.split(".")[0]] = pd.read_csv(path + filename, dtype=object)
+        read_files[filename.split(".")[0]] = pd.read_csv(path + filename, dtype=object, index_col=0)
         print(filename)
     print(str(len(sourcefiles)) + " files loaded")
     return read_files
@@ -59,6 +59,5 @@ decrease = ask_decrease() # ask decrease before because of logic issue
 
 # Double content of tables
 for table in tableread:
-    print('running',table)
     df = double_df(tableread[table],keys, table)
     decrease_tablesize(df, table, decrease)
