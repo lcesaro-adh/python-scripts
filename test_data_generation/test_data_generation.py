@@ -8,6 +8,7 @@ BYTE = 1000000
 
 custom_path = os.getcwd()  # to be changed
 path = custom_path + "/test_data_generation/rids/"
+
 sourcefiles = ["claims.csv", "policies.csv", "persons.csv"]
 keys = [
     "ID",
@@ -48,6 +49,7 @@ def double_df(df, list_columns):
     """Enlarge df creating keys for the list_columns
     df -> type: Dataframe
     list_columns -> type: List"""
+
     df_copy = df.copy()
     for column in list_columns:
         for real_column in df.columns:
