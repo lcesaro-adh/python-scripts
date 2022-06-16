@@ -7,7 +7,6 @@ from tasks.logs.logger import Logger
 
 logger = Logger()
 
-
 @click.command()
 @click.option("--input", "-i", required=True, type=str, help="Input folder with the base ridm to start")
 @click.option("--action", "-a", required=True, type=str, help="Action you want to do inc/dec")
@@ -45,7 +44,7 @@ def generate(input: str, action: str, amount: int, spark: str):
             # logger._logger_technical.info(filename)
             print(filename)
         # logger._logger_technical.info(str(len(sourcefiles))+"files loaded")
-        print(str(len(sourcefiles)) + "files loaded")
+        print(str(len(sourcefiles)) + " files loaded")
         return read_files
 
     def double_df(df: SparkDataFrame, list_columns: list):
@@ -68,7 +67,7 @@ def generate(input: str, action: str, amount: int, spark: str):
                 header="true"
             ).save(path=f"{path}/{table}")
             os.chdir(
-                f"/Users/ludovicocesaro/Desktop/Files/Reply/Allianz/Projects/adhdh-semantic-layer-aggregate-model/test_data_generation/ridm/{table}"
+                f"{path}{table}"
             )
             for file in glob.glob("*.csv"):
                 os.rename(file, f"{table}.csv")
@@ -88,7 +87,7 @@ def generate(input: str, action: str, amount: int, spark: str):
             header="true"
         ).save(path=f"{path}/{table}")
         os.chdir(
-            f"/Users/ludovicocesaro/Desktop/Files/Reply/Allianz/Projects/adhdh-semantic-layer-aggregate-model/test_data_generation/ridm/{table}"
+            f"{path}{table}"
         )
         for file in glob.glob("*.csv"):
             os.rename(file, f"{table}.csv")
@@ -109,14 +108,14 @@ def generate(input: str, action: str, amount: int, spark: str):
 if __name__ == "__main__":
     """
     Script to generate/reduce RIDMs size
-    GiventhepathtoadirectorycontainingadefinedsubsetofRIDMtables,
-    theoperationwantedtoperformandtheamountitenlarges/reducesthe
-    contentofthefolderandsavesit
+    Given the path to a directory containing a defined subset of RIDM tables,
+    the operation wanted to perform and the amount it enlarges/reduces the
+    content of the folder and saves it
 
-    Exampleincrement:
-    pythontest_data_generation.py-input/ridm/-actioninc-amount1
+    Example increment:
+    python test_data_generation.py -input /ridm/ -action inc -amount 1
 
-    Exampledecrement:
-    pythontest_data_generation.py-input/ridm/-actiondec-amount50
+    Example decrement:
+    python test_data_generation.py -input /ridm/ -action dec -amount 50
     """
     main()
