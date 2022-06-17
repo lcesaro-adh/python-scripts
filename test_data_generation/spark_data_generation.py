@@ -4,6 +4,8 @@ import pyspark.sql.functions as F
 from pyspark.sql import DataFrame as SparkDataFrame
 import os, glob, click, json
 from tasks.logs.logger import Logger
+from tasks.common.pyspark.loading import (load_dataframe)
+from tasks.common.pyspark.saving import (save_dataset)
 
 logger = Logger()
 
@@ -63,14 +65,10 @@ def generate(input: str, action: str, amount: int, spark: str):
             if i == 0:
                 df = tablesread[table]
             df = double_df(df, keys_list)
-            df.coalesce(1).write.format("csv").mode("overwrite").options(
-                header="true"
-            ).save(path=f"{path}/{table}")
-            os.chdir(
-                f"{path}{table}"
-            )
-            for file in glob.glob("*.csv"):
-                os.rename(file, f"{table}.csv")
+
+            table_dict = {table: df}
+            mod_path = path + table
+            save_dataset(table_dict, mod_path)
 
             print("increased and saved correctly")
             # logger._logger_technical.info(f"{table}increased and saved correctly")
@@ -96,9 +94,13 @@ def generate(input: str, action: str, amount: int, spark: str):
 
     tablesread = read_ridm(path, sourcefiles)
 
+    # for file in sourcefiles:
+    #     real_path = path + file
+    #     tablesread = load_dataframe(real_path, spark, null_value=0)
+
     if action == "inc":
         for table in tablesread:
-            print(tablesread[table])
+            #print(tablesread[table])
             increase_tablesize(tablesread[table], table, amount)
     else:
         for table in tablesread:
