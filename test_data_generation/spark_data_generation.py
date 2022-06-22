@@ -2,9 +2,11 @@ import string
 from pyspark.sql import SparkSession
 import pyspark.sql.functions as F
 from pyspark.sql import DataFrame as SparkDataFrame
+from pyspark.sql.types import StringType
 import os, glob, click, json
 from tasks.logs.logger import Logger
 from tasks.common.pyspark.loading import (load_dataframe)
+
 from tasks.common.pyspark.saving import (save_dataset)
 
 logger = Logger()
@@ -16,14 +18,14 @@ logger = Logger()
 @click.option("--context", "-c", default="slamApp", type=str, help="Spark context name")
 def main(input: str, action: str, amount: int, context: str) -> None:
     spark = SparkSession.builder.appName(context).getOrCreate()
-    generate(input, action, amount, spark)
+    setup(input, action, amount, spark)
 
 
-def generate(input: str, action: str, amount: int, spark: str):
+def setup(input: str, action: str, amount: int, spark: str):
     path = input
     sourcefiles = ["claims.csv", "policies.csv", "persons.csv"]
 
-    # !!-NEEDSREVIEW
+    # !!- NEEDSREVIEW
     dir = os.getcwd()
     f = open(f"{dir}/tasks/common/ridm/ridm_versions/v1/ridm.json")
     json_file = json.load(f)
@@ -39,7 +41,7 @@ def generate(input: str, action: str, amount: int, spark: str):
         read_files = {}
         for filename in sourcefiles:
             read_files[filename.split(".")[0]] = (
-                spark.read.option("delimiter", ";")
+                spark.read.option("delimiter", ",")
                 .option("header", True)
                 .csv(path + filename)
             )
@@ -55,7 +57,8 @@ def generate(input: str, action: str, amount: int, spark: str):
         for column in list_columns:
             for real_column in df.columns:
                 if real_column == column:
-                    df_copy[column] = df_copy[column] + "_A"
+                    df_copy[column] = df_copy.withColumn(column, df_copy[column].cast(StringType()))
+                    df_copy[column] = df_copy[column] + "_A" #issue here now
         df = df.union(df_copy)
         return df
 
@@ -68,7 +71,7 @@ def generate(input: str, action: str, amount: int, spark: str):
 
             table_dict = {table: df}
             mod_path = path + table
-            save_dataset(table_dict, mod_path)
+            save_dataset(table_dict, mod_path, "")
 
             print("increased and saved correctly")
             # logger._logger_technical.info(f"{table}increased and saved correctly")
@@ -81,14 +84,18 @@ def generate(input: str, action: str, amount: int, spark: str):
         data_decreased = df.withColumn("index", F.monotonically_increasing_id())
         data_decreased = data_decreased.sort("index").limit(last)
 
-        data_decreased.coalesce(1).write.format("csv").mode("overwrite").options(
-            header="true"
-        ).save(path=f"{path}/{table}")
-        os.chdir(
-            f"{path}{table}"
-        )
-        for file in glob.glob("*.csv"):
-            os.rename(file, f"{table}.csv")
+        table_dict = {table: data_decreased}
+        mod_path = path + table
+        save_dataset(table_dict, mod_path, "")
+
+        # data_decreased.coalesce(1).write.format("csv").mode("overwrite").options(
+        #     header="true"
+        # ).save(path=f"{path}/{table}")
+        # os.chdir(
+        #     f"{path}{table}"
+        # )
+        # for file in glob.glob("*.csv"):
+        #     os.rename(file, f"{table}.csv")
 
         print("decreased and saved correctly")
 
@@ -100,7 +107,7 @@ def generate(input: str, action: str, amount: int, spark: str):
 
     if action == "inc":
         for table in tablesread:
-            #print(tablesread[table])
+            print(tablesread[table])
             increase_tablesize(tablesread[table], table, amount)
     else:
         for table in tablesread:
