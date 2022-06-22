@@ -38,6 +38,13 @@ def setup(input: str, action: str, amount: int, spark: str):
         """Read ridm and save as dictionary"""
         # logger._logger_technical.info("start reading ridm from path:"+path)
         print("start reading ridm from part:" + path)
+
+        """path_to_csv: Dict[str, List[str]],
+            spark: SparkContext,
+            null_value: str,
+            json_schema: Dict[str, Dict[str, Any]] = {},
+        """
+
         read_files = {}
         for filename in sourcefiles:
             read_files[filename.split(".")[0]] = (
@@ -61,7 +68,7 @@ def setup(input: str, action: str, amount: int, spark: str):
                     df_copy = df_copy.withColumn(   # check if keys matches good
                         column,
                         F.concat(
-                            F.expr(f"substring({column}, 1, length({column}))"),
+                            F.expr(f"substring({column}, 0, length({column}))"),
                             F.lit('_A'),
                             F.substring(f"{column}", 0, 0)
                         )
