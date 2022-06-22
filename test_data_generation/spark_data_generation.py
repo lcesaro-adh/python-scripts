@@ -57,8 +57,15 @@ def setup(input: str, action: str, amount: int, spark: str):
         for column in list_columns:
             for real_column in df.columns:
                 if real_column == column:
-                    df_copy[column] = df_copy.withColumn(column, df_copy[column].cast(StringType()))
-                    df_copy[column] = df_copy[column] + "_A" #issue here now
+                    #df_copy[column] = df_copy[column] + "_A"   #issue here now
+                    df_copy = df_copy.withColumn(   # check if keys matches good
+                        column,
+                        F.concat(
+                            F.expr(f"substring({column}, 1, length({column}))"),
+                            F.lit('_A'),
+                            F.substring(f"{column}", 0, 0)
+                        )
+                    )
         df = df.union(df_copy)
         return df
 
