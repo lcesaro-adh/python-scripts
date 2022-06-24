@@ -3,58 +3,75 @@ from pyspark.sql import SparkSession
 import pyspark.sql.functions as F
 from pyspark.sql import DataFrame as SparkDataFrame
 from pyspark.sql.types import StringType
-import os, glob, click, json
+import os, click, json
 from tasks.logs.logger import Logger
-from tasks.common.pyspark.loading import (load_dataframe)
-
-from tasks.common.pyspark.saving import (save_dataset)
+from tasks.common.pyspark.loading import load_dataset
+from tasks.common.pyspark.saving import save_dataset
+from tasks.common.ridm.ridm_spec_processing import get_ridm_spec
 
 logger = Logger()
 
 @click.command()
-@click.option("--input", "-i", required=True, type=str, help="Input folder with the base ridm to start")
-@click.option("--action", "-a", required=True, type=str, help="Action you want to do inc/dec")
-@click.option("--amount", "-am", required=True, type=int, help="Quantity enlargement(times)/decrease(percentage)")
+@click.option(
+    "--input",
+    "-i",
+    required=True,
+    type=str,
+    help="Input folder with the base ridm to start",
+)
+# @click.option(
+#     "--output", "-o", required=True, type=str, help="Location folder where to output (should be the same as input)"
+# ) # TO BE FINISHED
+@click.option(
+    "--action", "-a", required=True, type=str, help="Action you want to do inc/dec"
+)
+@click.option(
+    "--amount",
+    "-am",
+    required=True,
+    type=int,
+    help="Quantity enlargement(times)/decrease(percentage)",
+)
 @click.option("--context", "-c", default="slamApp", type=str, help="Spark context name")
 def main(input: str, action: str, amount: int, context: str) -> None:
     spark = SparkSession.builder.appName(context).getOrCreate()
     setup(input, action, amount, spark)
 
-
 def setup(input: str, action: str, amount: int, spark: str):
     path = input
-    sourcefiles = ["claims.csv", "policies.csv", "persons.csv"]
+    sourcefiles = ["claims", "policies", "persons"]
 
-    # !!- NEEDSREVIEW
-    dir = os.getcwd()
-    f = open(f"{dir}/tasks/common/ridm/ridm_versions/v1/ridm.json")
-    json_file = json.load(f)
+    ridm_relations = get_ridm_spec('v1')
+    # print(ridm_relations, 'ridm_relations')
+
+    #!!- Get RIDM relations keys !! - Replace with get_ridm_spec()
+    # dir = os.getcwd()
+    # f = open(f"{dir}/tasks/common/ridm/ridm_versions/v1/ridm.json")
+    # json_file = json.load(f)
     keys_list = []
-    for x in json_file["ridm_relations"]:
-        key = json_file["ridm_relations"][x]["right_field"]
+    for a in ridm_relations[1]:
+        key = ridm_relations[1][a]['right_field']
         keys_list.append(key)
+    keys_list.append("ID")
+    print(keys_list)
+    # for x in json_file["ridm_relations"]:
+    #     key = json_file["ridm_relations"][x]["right_field"]
+    #     keys_list.append(key)
 
     def read_ridm(path: str, sourcefiles: dict):
         """Read ridm and save as dictionary"""
         # logger._logger_technical.info("start reading ridm from path:"+path)
         print("start reading ridm from part:" + path)
-
-        """path_to_csv: Dict[str, List[str]],
-            spark: SparkContext,
-            null_value: str,
-            json_schema: Dict[str, Dict[str, Any]] = {},
-        """
-
+        input_tables = {
+            input: sourcefiles,
+        }
         read_files = {}
         for filename in sourcefiles:
-            read_files[filename.split(".")[0]] = (
-                spark.read.option("delimiter", ",")
-                .option("header", True)
-                .csv(path + filename)
-            )
-            # logger._logger_technical.info(filename)
+            read_files = load_dataset(input_tables, spark, "<NA>")
+            print(read_files)
+            #logger._logger_technical.info(filename)
             print(filename)
-        # logger._logger_technical.info(str(len(sourcefiles))+"files loaded")
+        #logger._logger_technical.info(str(len(sourcefiles))+"files loaded")
         print(str(len(sourcefiles)) + " files loaded")
         return read_files
 
@@ -64,14 +81,16 @@ def setup(input: str, action: str, amount: int, spark: str):
         for column in list_columns:
             for real_column in df.columns:
                 if real_column == column:
+
                     #df_copy[column] = df_copy[column] + "_A"   #issue here now
-                    df_copy = df_copy.withColumn(   # check if keys matches good
+
+                    df_copy = df_copy.withColumn(  # !!- Needs review
                         column,
                         F.concat(
                             F.expr(f"substring({column}, 0, length({column}))"),
-                            F.lit('_A'),
-                            F.substring(f"{column}", 0, 0)
-                        )
+                            F.lit("_A"),
+                            F.substring(f"{column}", 0, 0),
+                        ),
                     )
         df = df.union(df_copy)
         return df
@@ -102,26 +121,12 @@ def setup(input: str, action: str, amount: int, spark: str):
         mod_path = path + table
         save_dataset(table_dict, mod_path, "")
 
-        # data_decreased.coalesce(1).write.format("csv").mode("overwrite").options(
-        #     header="true"
-        # ).save(path=f"{path}/{table}")
-        # os.chdir(
-        #     f"{path}{table}"
-        # )
-        # for file in glob.glob("*.csv"):
-        #     os.rename(file, f"{table}.csv")
-
         print("decreased and saved correctly")
 
     tablesread = read_ridm(path, sourcefiles)
 
-    # for file in sourcefiles:
-    #     real_path = path + file
-    #     tablesread = load_dataframe(real_path, spark, null_value=0)
-
     if action == "inc":
         for table in tablesread:
-            print(tablesread[table])
             increase_tablesize(tablesread[table], table, amount)
     else:
         for table in tablesread:
@@ -136,9 +141,9 @@ if __name__ == "__main__":
     content of the folder and saves it
 
     Example increment:
-    python test_data_generation.py -input /ridm/ -action inc -amount 1
+    python data_generation.py -input /ridm/ -action inc -amount 1
 
     Example decrement:
-    python test_data_generation.py -input /ridm/ -action dec -amount 50
+    python data_generation.py -input /ridm/ -action dec -amount 50
     """
     main()
