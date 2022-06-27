@@ -2,6 +2,7 @@ import string
 from pyspark.sql import SparkSession
 import pyspark.sql.functions as F
 from pyspark.sql import DataFrame as SparkDataFrame
+from pyspark.sql.functions import desc
 import click
 from pyspark import SparkContext
 from tasks.logs.logger import Logger
@@ -67,8 +68,6 @@ def read_ridm(input: str, path: str, sourcefiles: dict, spark: SparkContext):
     }
     read_files = {}
     for filename in sourcefiles:
-        print(input_tables, "INPUTABLES")
-        print(spark, "SPARK")
         read_files = load_dataset(input_tables, spark, "<NA>")
         #logger._logger_technical.info(filename)
         print(filename)
@@ -84,7 +83,6 @@ def double_df(df: SparkDataFrame, list_columns: list):
             if real_column == column:
 
                 #df_copy[column] = df_copy[column] + "_A"
-
                 df_copy = df_copy.withColumn(  # !!- Matching does not work fine
                     column,
                     F.concat(
@@ -106,6 +104,7 @@ def increase_tablesize(df: SparkDataFrame, table: str, increase: int, tablesread
         if i == 0:
             df = tablesread[table]
         df = double_df(df, keys_list)
+        df = df.sort(desc("ID"))
 
         table_dict = {table: df}
         mod_path = output_path + table
@@ -121,12 +120,14 @@ def decrease_tablesize(df: SparkDataFrame, table: string, decrease: int, output_
     last = total - toremove
     data_decreased = df.withColumn("index", F.monotonically_increasing_id())
     data_decreased = data_decreased.sort("index").limit(last)
+    data_decreased = data_decreased.sort(desc("ID"))
 
     table_dict = {table: data_decreased}
     mod_path = output_path + table
     save_dataset(table_dict, mod_path, "")
 
     print("decreased and saved correctly")
+
 
 if __name__ == "__main__":
     """
