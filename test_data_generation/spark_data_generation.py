@@ -79,7 +79,7 @@ def setup(input: str, output:str, action: str, amount: int, spark: str):
 
                     #df_copy[column] = df_copy[column] + "_A"
 
-                    df_copy = df_copy.withColumn(  # !!- Needs review
+                    df_copy = df_copy.withColumn(  # !!- Matching does not work fine
                         column,
                         F.concat(
                             F.expr(f"substring({column}, 0, length({column}))"),
