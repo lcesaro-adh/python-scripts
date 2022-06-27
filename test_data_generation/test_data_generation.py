@@ -1,5 +1,6 @@
 import os
 from tempfile import TemporaryDirectory
+
 import pandas as pd
 from pyspark.sql import SparkSession
 
@@ -11,18 +12,17 @@ from tasks.logs.logger import Logger
 
 logger = Logger()
 
-SRC_DIRECTORY = f"{get_directory_path_x_levels_up_from_file_path(__file__, 2)}/test_data_generation/"
+SRC_DIRECTORY = f"{get_directory_path_x_levels_up_from_file_path(__file__, 2)}src/tasks/test_data_generation/performance_data_generation/"
 _THIS_DIRECTORY_PATH = get_directory_path_from_file_path(__file__)
+
 
 def test_generate(spark_session: SparkSession) -> None:
     # Arrange
     with TemporaryDirectory() as temp_dir:
-        command = (
-            f" python {SRC_DIRECTORY}data_generation.py -i {_THIS_DIRECTORY_PATH}start_test_ridm/ -o {temp_dir}/ -a inc -am 1"
-        )
+        print(SRC_DIRECTORY, "SRC_DIR")
+        command = f" python {SRC_DIRECTORY}data_generation.py -i {_THIS_DIRECTORY_PATH}start_test_ridm/ -o {temp_dir}/ -a inc -am 1 -t"
         expected_output_file_path = f"{_THIS_DIRECTORY_PATH}exp_output/claims.csv"
         expected_output_df = pd.read_csv(expected_output_file_path)
-
         # Act
         os.system(command)
         # Assert
