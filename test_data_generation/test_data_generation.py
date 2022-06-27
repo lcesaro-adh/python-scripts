@@ -20,12 +20,12 @@ def test_generate(spark_session: SparkSession) -> None:
         command = (
             f" python {SRC_DIRECTORY}data_generation.py -i {_THIS_DIRECTORY_PATH}start_test_ridm/ -o {temp_dir}/ -a inc -am 1"
         )
-        expected_output_file_path = f"{_THIS_DIRECTORY_PATH}ridm/claims.csv"
+        expected_output_file_path = f"{_THIS_DIRECTORY_PATH}exp_output/claims.csv"
         expected_output_df = pd.read_csv(expected_output_file_path)
+
         # Act
         os.system(command)
         # Assert
         result_output_file_path = f"{temp_dir}/claims.csv"
-        print(result_output_file_path)
         result_df = pd.read_csv(result_output_file_path)
         pd.testing.assert_frame_equal(result_df, expected_output_df, check_dtype=False)
